@@ -5,18 +5,23 @@ const width = 1000;
 const height = 500;
 
 var paddle = {
-    width: 100,
+    width: 80,
     height: 20,
-    speed: 3
+    speed: 5
 };
+paddle.sensitivity = 0.05/paddle.width; // constant which determines how hard the paddle "strikes" the ball
 paddle.startXPos = paddle.xPos = (width - paddle.width)/2;
 paddle.yPos = height - paddle.height;
 
 var ball = {
     radius: 10,
     angle: Math.PI/4,
-    speed: 3
+    speed: 3,
+    xAccel: 0,
+    paddleHit: false,
+    lastPaddleHit: false
 };
+ball.xSpeed = ball.speed*Math.cos(ball.angle);
 ball.centre = {
     xPos: paddle.startXPos + paddle.width/2,
     yPos: (height - paddle.height - ball.radius)
@@ -37,11 +42,12 @@ ball.normaliseAngle = function(angle) {
 }
 
 document.body.addEventListener("keydown", function(e) {
-    e.preventDefault();
     if (e.keyCode == 39) {
+        e.preventDefault();
         paddle.goingEast = true;
     }
     else if (e.keyCode == 37) {
+        e.preventDefault();
         paddle.goingWest = true;
     }
 });
@@ -110,7 +116,10 @@ function initialise() {
         xPos: paddle.startXPos + paddle.width/2,
         yPos: (height - paddle.height - ball.radius)
     };
+    ball.speed = 3;
     ball.angle = Math.PI/4;
+    ball.xSpeed = ball.speed*Math.cos(ball.angle);
+    ball.xAccel = 0;
     paddle.xPos = paddle.startXPos;
     paddle.goingEast = paddle.goingWest = false;
     makeBlocks();
@@ -146,6 +155,10 @@ function moveStuff() {
     // compute new positions of ball and paddle
 
     // paddle:
+    // first save previous position:
+    paddle.prevXPos = paddle.xPos;
+
+    // calculate new positions
     if (paddle.goingEast) {
         paddle.xPos += paddle.speed;
     }
@@ -154,8 +167,15 @@ function moveStuff() {
     }
 
     // ball:
-    ball.centre.xPos += Math.cos(ball.angle)*ball.speed;
+    if (ball.paddleHit) {
+        ball.xSpeed += ball.xAccel;
+        ball.speed = ball.xSpeed/Math.cos(ball.angle);
+        ball.angle = Math.acos(ball.xSpeed/ball.speed) * Math.sign(ball.angle);
+    }
+
+    ball.centre.xPos += ball.xSpeed;
     ball.centre.yPos -= Math.sin(ball.angle)*ball.speed;
+    
 }
 
 
@@ -173,16 +193,34 @@ function hitDetection() {
     // bottom of screen: bounce off paddle if it's there
     if (ball.centre.yPos+ball.radius>=height-paddle.height) {
         if (paddle.xPos<=ball.centre.xPos+ball.radius && ball.centre.xPos-ball.radius<=paddle.xPos+paddle.width) {
+            ball.paddleHit = true;
             if (ball.angle<0) { 
                 // avoid "wobbling" by not changing direction if ball is already going upwards
                 ball.angle = ball.normaliseAngle(-ball.angle);
+                ball.xSpeed = ball.speed*Math.cos(ball.angle);
+            }
+            // change x-acceleration of the ball - but only once!
+            // magnitude of change based on distance from centre of paddle
+            if (!ball.lastPaddleHit) {
+                ball.xAccel = paddle.sensitivity*(paddle.xPos - paddle.prevXPos)*
+                Math.abs(ball.centre.xPos - (paddle.xPos + paddle.width/2));
             }
         }
+        else {
+            ball.paddleHit = false;
+        }
+    }
+    else {
+        ball.paddleHit = false;
     }
 
     // bounce off top of screen:
     if (ball.centre.yPos-ball.radius<=0) {
-        ball.angle = ball.normaliseAngle(-ball.angle);
+        // more "wobble avoidance":
+        if (ball.angle>0) {
+            ball.angle = ball.normaliseAngle(-ball.angle);
+            ball.xSpeed = ball.speed*Math.cos(ball.angle);
+        }
     }
     
     // if bottom of screen reached, lose the game!
@@ -192,12 +230,23 @@ function hitDetection() {
     }
 
     // bounce off left and right walls:
-    if (ball.centre.xPos-ball.radius<=0 || ball.centre.xPos+ball.radius>=width) {
-        ball.angle = ball.normaliseAngle(Math.PI - ball.angle);
+    if (ball.centre.xPos-ball.radius<=0) {
+        // wobble avoidance:
+        if (Math.abs(ball.angle)>Math.PI/2) {
+            ball.angle = ball.normaliseAngle(Math.PI - ball.angle);
+            ball.xSpeed = ball.speed*Math.cos(ball.angle);
+        }
+    }
+    
+    if (ball.centre.xPos+ball.radius>=width) {
+        // wobble avoidance
+        if (Math.abs(ball.angle)<=Math.PI/2) {
+            ball.angle = ball.normaliseAngle(Math.PI - ball.angle);
+            ball.xSpeed = ball.speed*Math.cos(ball.angle);
+        }
     }
 
-    // bounce off blocks, and destroy hit block. A complicated business!
-
+    // bounce off blocks, and destroy hit block
     // first we'll run over every block, and check for a hit:
     blocks.data.forEach(function(block) {
         if (ball.centre.xPos+ball.radius>=block.xPos &&
@@ -211,15 +260,26 @@ function hitDetection() {
             if (ball.centre.yPos<block.yPos || ball.centre.yPos>block.yPos+block.height) {
                 // ball hitting from above or below:
                 ball.angle = ball.normaliseAngle(-ball.angle);
+                ball.xSpeed = ball.speed*Math.cos(ball.angle);
             }
             else {
                 // hitting from right or left (rare):
                 ball.angle = ball.normaliseAngle(Math.PI - ball.angle);
+                ball.xSpeed = ball.speed*Math.cos(ball.angle);
             }
         }
     });
+
+    ball.lastPaddleHit = ball.paddleHit;
+
     // update array of blocks:
     blocks.data = blocks.data.filter(block => block.stillThere);
+    if (blocks.data.length == 0) {
+        clearCanvas();
+        drawStuff();
+        alert("Congratulations - level complete!");
+        quit();
+    }
 }
 
 
