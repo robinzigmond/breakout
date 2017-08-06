@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Breakout</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <h1 class="header-text">Web breakout</h1>
+        <h4 class="header-text">Coded by 
+            <a href="https://github.com/robinzigmond/" target="_blank">Robin Zigmond</a> in Javascript.</h4>
+        <canvas id="canvas" width="1000" height="500"></canvas>
+        <div id="controls">
+            <p>Use arrow keys to move the paddle</p>
+            <button id="start" onclick="startGame()">Start game!</button>
+            <button id="stop" onclick="quit()">Quit</button>
+            <p>Level: <strong id="level">1</strong> of <strong id="num-levels">1</strong></p>
+        </div>
+        <script src="breakout.js"></script>
+    </body>
+</html>
