@@ -1,4 +1,4 @@
-var colours = ["red", "green", "blue", "yellow"];
+var colours = ["red", "blue", "green", "yellow"];
 
 var blocks = {
     rowHeight: 15,

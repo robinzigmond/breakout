@@ -11,7 +11,7 @@ var timeRemaining, time, prevTime;
 
 var paddle = {
     width: 80,
-    height: 20,
+    height: 14,
     speed: 5
 };
 paddle.sensitivity = 0.05/paddle.width; // constant which determines how hard the paddle "strikes" the ball
@@ -19,7 +19,7 @@ paddle.startXPos = paddle.xPos = (width - paddle.width)/2;
 paddle.yPos = height - paddle.height;
 
 var ball = {
-    radius: 10,
+    radius: 8,
     angle: Math.PI/4,
     speed: 3,
     xAccel: 0,
@@ -109,7 +109,8 @@ function initialise() {
     paddle.xPos = paddle.startXPos;
     paddle.goingEast = paddle.goingWest = false;
     makeBlocks();
-    timeRemaining = levels[currentLevel-1].time*1000;
+    timeRemaining = (levels[currentLevel-1].time+1)*1000;  // add extra second to get starting time displayed 
+                                                           // correctly. It is taken off at the end!
     time = Date.now();
     timer();
 }
@@ -124,18 +125,33 @@ function clearCanvas() {
 function drawStuff() {
     // draw paddle
     ctx.fillStyle = "brown";
-    ctx.fillRect(paddle.xPos, paddle.yPos, paddle.width, paddle.height);
+    //ctx.strokeStyle = "black";
+    ctx.fillRect(paddle.xPos+paddle.height/2, paddle.yPos, paddle.width-paddle.height, paddle.height);
+    ctx.beginPath();
+    ctx.arc(paddle.xPos+paddle.height/2, paddle.yPos+paddle.height/2, paddle.height/2, Math.PI/2, 3*Math.PI/2);
+    //ctx.stroke()
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(paddle.xPos+paddle.width-paddle.height/2, paddle.yPos+paddle.height/2, paddle.height/2, -Math.PI/2, Math.PI/2);
+    //ctx.stroke();
+    ctx.fill();
 
     // draw ball
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = "black";
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(ball.centre.xPos, ball.centre.yPos, ball.radius, 0, 2*Math.PI);
     ctx.fill();
+    ctx.stroke();
 
     // draw blocks
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 0.5;
     blocks.data.forEach(function(block) {
         ctx.fillStyle = block.colour;
         ctx.fillRect(block.xPos, block.yPos, block.width, block.height);
+        ctx.strokeRect(block.xPos, block.yPos, block.width, block.height);
     });
 }
 
@@ -267,8 +283,14 @@ function hitDetection() {
         clearCanvas();
         drawStuff();
         alert("Congratulations - level complete!");
-        currentLevel++;
-        initialise();
+        if (currentLevel == levels.length) {
+            alert("Well done, you've completed all currently available levels!");
+            quit();
+        }
+        else {
+            currentLevel++;
+            initialise();
+        }
     }
 }
 
@@ -277,32 +299,42 @@ function timer() {
     prevTime = time;
     time = Date.now();
     timeRemaining -= (time - prevTime);
-    if (timeRemaining<=0) {
+    if (timeRemaining<1000) {
+        ctx.font = "24px Arial";
+        var minsLeft = Math.floor(timeRemaining/60000);
+        var leftoverSeconds = Math.floor((timeRemaining - minsLeft*60000)/1000);
+        var timeString = minsLeft + ":" + (Math.floor(leftoverSeconds)/100).toFixed(2).slice(2);
+        ctx.fillStyle = "red";
+        ctx.fillText(timeString, 30, 30);
         alert("Game over - time ran out!");
         quit();
     }
-    ctx.font = "24px Arial";
-    var minsLeft = Math.floor(timeRemaining/60000);
-    var leftoverSeconds = Math.floor((timeRemaining - minsLeft*60000)/1000);
-    var timeString = minsLeft + ":" + (leftoverSeconds/100).toFixed(2).slice(2);
-    if (timeRemaining < 31000) {
-        ctx.fillStyle = "red";
-    }
     else {
-        ctx.fillStyle = "black";
+        ctx.font = "24px Arial";
+        var minsLeft = Math.floor(timeRemaining/60000);
+        var leftoverSeconds = Math.floor((timeRemaining - minsLeft*60000)/1000);
+        var timeString = minsLeft + ":" + (leftoverSeconds/100).toFixed(2).slice(2);
+        if (timeRemaining < 31000) {
+            ctx.fillStyle = "red";
+        }
+        else {
+            ctx.fillStyle = "black";
+        }
+        ctx.fillText(timeString, 30, 30);
     }
-    ctx.fillText(timeString, 30, 30);
 }
 
 
 function gameLoop() {
     if (running) {
         clearCanvas();
-        drawStuff();
-        moveStuff();
-        hitDetection();
         timer();
-        requestAnimationFrame(gameLoop);
+        if (running) {
+            drawStuff();
+            moveStuff();
+            hitDetection();
+            requestAnimationFrame(gameLoop);
+        }
     }
 }
 
@@ -316,5 +348,6 @@ function startGame() {
 
 
 function quit() {
+    drawStuff();
     running = false;
 }
