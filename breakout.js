@@ -1,3 +1,6 @@
+document.getElementById("level").innerText=currentLevel;
+document.getElementById("num-levels").innerText=levels.length;
+
 var running = false;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -92,6 +95,7 @@ function makeBlocks() {
 
 
 function initialise() {
+    document.getElementById("level").innerText=currentLevel;
     ball.centre = {
         xPos: paddle.startXPos + paddle.width/2,
         yPos: (height - paddle.height - ball.radius)
@@ -259,8 +263,7 @@ function hitDetection() {
         drawStuff();
         alert("Congratulations - level complete!");
         currentLevel++;
-        document.getElementById("level").innerText=currentLevel;
-        startGame();
+        initialise();
     }
 }
 
@@ -277,6 +280,7 @@ function gameLoop() {
 
 
 function startGame() {
+    currentLevel = 1;
     initialise();
     running = true;
     gameLoop();
