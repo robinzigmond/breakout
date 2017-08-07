@@ -61,35 +61,15 @@ document.body.addEventListener("keyup", function(e) {
     }
 });
 
-var colours = ["red", "green", "blue", "yellow"];
-
-var blocks = {
-    rowHeight: 15,
-    unitWidth: 20,
-    heightOffset: 50
-}
-
-// abstract array of arrays to code for blocks
-// each inner array codes for a complete row of blocks.
-// A string of 1s, 2s etc. represents a complete block,
-// which will be coloured according to its number
-blocks.pattern = [
-    [1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1],
-    [3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3],
-    [1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1],
-    [3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3],
-    [1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1],
-    [3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3,4,4,4,4,3,3,3,3]
-]
 
 function makeBlocks() {
-    // use above array to compute actual block positions:
+    // use level array to compute actual block positions:
     blocks.data = [];
-    blocks.pattern.forEach(function(row, rowNo) {
+    levels[currentLevel-1].forEach(function(row, rowNo) {
         var lastEntry;
         row.forEach(function(entry, colNo) {
             if (entry>0) {
-                if (entry == lastEntry) {
+                if (entry === lastEntry) {
                     // extend previous block's width
                     blocks.data[blocks.data.length-1].width += blocks.unitWidth;
                 }
@@ -101,11 +81,11 @@ function makeBlocks() {
                         width: blocks.unitWidth,
                         height: blocks.rowHeight,
                         colour: colours[entry-1],
-                        stillThere: true // used later to track block hits by the ball
+                        stillThere: true // used later to track blocks hit by the ball
                     });
                 }
-                lastEntry = entry;
             }
+            lastEntry = entry;
         })
     });
 }
@@ -278,7 +258,9 @@ function hitDetection() {
         clearCanvas();
         drawStuff();
         alert("Congratulations - level complete!");
-        quit();
+        currentLevel++;
+        document.getElementById("level").innerText=currentLevel;
+        startGame();
     }
 }
 
