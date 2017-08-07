@@ -7,6 +7,8 @@ const ctx = canvas.getContext("2d");
 const width = 1000;
 const height = 500;
 
+var timeRemaining, time, prevTime;
+
 var paddle = {
     width: 80,
     height: 20,
@@ -68,7 +70,7 @@ document.body.addEventListener("keyup", function(e) {
 function makeBlocks() {
     // use level array to compute actual block positions:
     blocks.data = [];
-    levels[currentLevel-1].forEach(function(row, rowNo) {
+    levels[currentLevel-1].blocks.forEach(function(row, rowNo) {
         var lastEntry;
         row.forEach(function(entry, colNo) {
             if (entry>0) {
@@ -107,6 +109,9 @@ function initialise() {
     paddle.xPos = paddle.startXPos;
     paddle.goingEast = paddle.goingWest = false;
     makeBlocks();
+    timeRemaining = levels[currentLevel-1].time*1000;
+    time = Date.now();
+    timer();
 }
 
 
@@ -209,7 +214,7 @@ function hitDetection() {
     
     // if bottom of screen reached, lose the game!
     if (ball.centre.yPos+ball.radius>=height) {
-        alert("game over!");
+        alert("Game over - the ball fell off the bottom!");
         quit();
     }
 
@@ -268,12 +273,35 @@ function hitDetection() {
 }
 
 
+function timer() {
+    prevTime = time;
+    time = Date.now();
+    timeRemaining -= (time - prevTime);
+    if (timeRemaining<=0) {
+        alert("Game over - time ran out!");
+        quit();
+    }
+    ctx.font = "24px Arial";
+    var minsLeft = Math.floor(timeRemaining/60000);
+    var leftoverSeconds = Math.floor((timeRemaining - minsLeft*60000)/1000);
+    var timeString = minsLeft + ":" + (leftoverSeconds/100).toFixed(2).slice(2);
+    if (timeRemaining < 31000) {
+        ctx.fillStyle = "red";
+    }
+    else {
+        ctx.fillStyle = "black";
+    }
+    ctx.fillText(timeString, 30, 30);
+}
+
+
 function gameLoop() {
     if (running) {
         clearCanvas();
         drawStuff();
         moveStuff();
         hitDetection();
+        timer();
         requestAnimationFrame(gameLoop);
     }
 }
