@@ -1,7 +1,7 @@
 document.getElementById("level").innerText=currentLevel;
 document.getElementById("num-levels").innerText=levels.length;
 
-var running = false;
+var running = true;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const width = 1000;
@@ -104,10 +104,11 @@ function initialise() {
     paddle.xPos = paddle.startXPos;
     paddle.goingEast = paddle.goingWest = false;
     makeBlocks();
+    running = true;
     timeRemaining = (levels[currentLevel-1].time+1)*1000;  // add extra second to get starting time displayed 
                                                            // correctly. It is taken off at the end!
     time = Date.now();
-    timer();
+    gameLoop();
 }
 
 
@@ -214,8 +215,8 @@ function hitDetection() {
     
     // if bottom of screen reached, lose the game!
     if (ball.centre.yPos+ball.radius>=height) {
-        setTimeout(alert("Game over - the ball fell off the bottom!"), 1000);
-        initialise();
+        running = false;
+        bootbox.alert("Game over - the ball fell off the bottom!", initialise);
     }
 
     // bounce off left and right walls:
@@ -264,15 +265,16 @@ function hitDetection() {
     if (blocks.data.length == 0) {
         clearCanvas();
         drawStuff();
-        setTimeout(alert("Congratulations - level complete!"), 1000);
-        if (currentLevel == levels.length) {
-            setTimeout(alert("Well done, you've completed all currently available levels!"), 1000);
-            quit();
-        }
-        else {
-            currentLevel++;
-            initialise();
-        }
+        running = false;
+        bootbox.alert("Congratulations - level complete!", function() {
+            if (currentLevel == levels.length) {
+                bootbox.alert("Well done, you've completed all currently available levels!", quit);
+            }
+            else {
+                currentLevel++;
+                initialise();
+            }
+        });
     }
 }
 
@@ -288,8 +290,8 @@ function timer() {
         var timeString = minsLeft + ":" + (Math.floor(leftoverSeconds)/100).toFixed(2).slice(2);
         ctx.fillStyle = "red";
         ctx.fillText(timeString, 30, 30);
-        setTimeout(alert("Game over - time ran out!"), 1000);
-        initialise();
+        running = false;
+        bootbox.alert("Game over - time ran out!", initialise);
     }
     else {
         ctx.font = "24px Arial";
@@ -323,8 +325,9 @@ function gameLoop() {
 
 function startGame() {
     currentLevel = 1;
-    initialise();
-    running = true;
+    makeBlocks();
+    timeRemaining = (levels[currentLevel-1].time+1)*1000;
+    time = Date.now();
     gameLoop();
 }
 
@@ -332,4 +335,14 @@ function startGame() {
 function quit() {
     drawStuff();
     running = false;
+}
+
+
+function helpText() {
+    bootbox.alert({
+        message: "<p>This is a version of the classic Breakout game. The object is simply to clear the screen of all the coloured blocks before the time runs out.</p>"
+        + "<p>The only controls are the left and right arrow keys, which move the paddle left or right along the bottom of the screen. If the ball hits the bottom, you lose.</p>"
+        + "<p>The angle that the ball bounces back depends on which part of the paddle it hits - the nearer the edge, the sharper the angle.</p>"
+        + "<p>And that's really all there is to it!</p>"
+    });
 }

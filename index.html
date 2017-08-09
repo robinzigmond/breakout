@@ -3,19 +3,41 @@
     <head>
         <meta charset="UTF-8">
         <title>Breakout</title>
+        <link rel="stylesheet" type="text/css" href="lib/bootstrap-3.3.7-dist/css/bootstrap.min.css">
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body>
-        <h1 class="header-text">Web breakout</h1>
-        <h4 class="header-text">Coded by 
-            <a href="https://github.com/robinzigmond/" target="_blank">Robin Zigmond</a> in Javascript.</h4>
-        <canvas id="canvas" width="1000" height="500"></canvas>
-        <div id="controls">
-            <p>Use arrow keys to move the paddle</p>
-            <button id="start" onclick="startGame()">Start game!</button>
-            <button id="stop" onclick="quit()">Quit</button>
-            <p>Level: <strong id="level"></strong> of <strong id="num-levels"></strong></p>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1 class="header-text">Web breakout</h1>
+                    <h4 class="header-text">Coded by 
+                        <a href="https://github.com/robinzigmond/" target="_blank">Robin Zigmond</a> in Javascript.</h4>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12" id="canvas-container">
+                    <canvas id="canvas" width="1000" height="500"></canvas>
+                </div>
+            </div>
+            <div class="row" id="controls">
+                <div class="col-sm-3">
+                    <button class="btn btn-small btn-info" onclick="helpText()">How to play</button>
+                </div>
+                <div class="col-sm-3">
+                    <button class="btn btn-small btn-primary" id="start" onclick="startGame()">Start game!</button>
+                </div>
+                <div class="col-sm-3">
+                    <button class="btn btn-small btn-warning" id="stop" onclick="quit()">Quit</button>
+                </div>
+                <div class="col-sm-3">
+                    <p>Level: <strong id="level"></strong> of <strong id="num-levels"></strong></p>
+                </div>
+            </div>
         </div>
+        <script src="lib/jquery-3.2.1.min.js"></script>
+        <script src="lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+        <script src="lib/bootbox.min.js"></script>
         <script src="levels.js"></script>
         <script src="breakout.js"></script>
     </body>
