@@ -21,10 +21,7 @@ paddle.yPos = height - paddle.height;
 var ball = {
     radius: 8,
     angle: Math.PI/4,
-    speed: 3,
-    xAccel: 0,
-    paddleHit: false,
-    lastPaddleHit: false
+    speed: 4,
 };
 ball.xSpeed = ball.speed*Math.cos(ball.angle);
 ball.centre = {
@@ -102,10 +99,8 @@ function initialise() {
         xPos: paddle.startXPos + paddle.width/2,
         yPos: (height - paddle.height - ball.radius)
     };
-    ball.speed = 3;
+    ball.speed = 4;
     ball.angle = Math.PI/4;
-    ball.xSpeed = ball.speed*Math.cos(ball.angle);
-    ball.xAccel = 0;
     paddle.xPos = paddle.startXPos;
     paddle.goingEast = paddle.goingWest = false;
     makeBlocks();
@@ -125,15 +120,12 @@ function clearCanvas() {
 function drawStuff() {
     // draw paddle
     ctx.fillStyle = "brown";
-    //ctx.strokeStyle = "black";
     ctx.fillRect(paddle.xPos+paddle.height/2, paddle.yPos, paddle.width-paddle.height, paddle.height);
     ctx.beginPath();
     ctx.arc(paddle.xPos+paddle.height/2, paddle.yPos+paddle.height/2, paddle.height/2, Math.PI/2, 3*Math.PI/2);
-    //ctx.stroke()
     ctx.fill();
     ctx.beginPath();
     ctx.arc(paddle.xPos+paddle.width-paddle.height/2, paddle.yPos+paddle.height/2, paddle.height/2, -Math.PI/2, Math.PI/2);
-    //ctx.stroke();
     ctx.fill();
 
     // draw ball
@@ -172,13 +164,7 @@ function moveStuff() {
     }
 
     // ball:
-    if (ball.paddleHit) {
-        ball.xSpeed += ball.xAccel;
-        ball.speed = ball.xSpeed/Math.cos(ball.angle);
-        ball.angle = Math.acos(ball.xSpeed/ball.speed) * Math.sign(ball.angle);
-    }
-
-    ball.centre.xPos += ball.xSpeed;
+    ball.centre.xPos += Math.cos(ball.angle)*ball.speed;
     ball.centre.yPos -= Math.sin(ball.angle)*ball.speed;
     
 }
@@ -201,22 +187,20 @@ function hitDetection() {
             ball.paddleHit = true;
             if (ball.angle<0) { 
                 // avoid "wobbling" by not changing direction if ball is already going upwards
-                ball.angle = ball.normaliseAngle(-ball.angle);
-                ball.xSpeed = ball.speed*Math.cos(ball.angle);
-            }
-            // change x-acceleration of the ball - but only once!
-            // magnitude of change based on distance from centre of paddle
-            if (!ball.lastPaddleHit) {
-                ball.xAccel = paddle.sensitivity*(paddle.xPos - paddle.prevXPos)*
-                Math.abs(ball.centre.xPos - (paddle.xPos + paddle.width/2));
+
+                // now change angle, depending on position on paddle it hits (not very physicallyl realistic,
+                // but needed to give player any chance of controlling the ball's path, and usually done)
+                // we do this by setting the new angle to be that made from the horizontal by a straight line from
+                // a point 10px below the bottom middle of the paddle to the contact point
+                // (the very bottom of the ball)
+                var paddleCentre = {x: paddle.xPos + paddle.width/2, y: height + 10};
+                var contactPoint = {x: ball.centre.xPos, y: ball.centre.yPos + ball.radius};
+                var xDist = contactPoint.x - paddleCentre.x;
+                var yDist = contactPoint.y - paddleCentre.y;
+                var distance = Math.sqrt(xDist*xDist + yDist*yDist);
+                ball.angle = Math.acos(xDist/distance);
             }
         }
-        else {
-            ball.paddleHit = false;
-        }
-    }
-    else {
-        ball.paddleHit = false;
     }
 
     // bounce off top of screen:
@@ -230,8 +214,8 @@ function hitDetection() {
     
     // if bottom of screen reached, lose the game!
     if (ball.centre.yPos+ball.radius>=height) {
-        alert("Game over - the ball fell off the bottom!");
-        quit();
+        setTimeout(alert("Game over - the ball fell off the bottom!"), 1000);
+        initialise();
     }
 
     // bounce off left and right walls:
@@ -275,16 +259,14 @@ function hitDetection() {
         }
     });
 
-    ball.lastPaddleHit = ball.paddleHit;
-
     // update array of blocks:
     blocks.data = blocks.data.filter(block => block.stillThere);
     if (blocks.data.length == 0) {
         clearCanvas();
         drawStuff();
-        alert("Congratulations - level complete!");
+        setTimeout(alert("Congratulations - level complete!"), 1000);
         if (currentLevel == levels.length) {
-            alert("Well done, you've completed all currently available levels!");
+            setTimeout(alert("Well done, you've completed all currently available levels!"), 1000);
             quit();
         }
         else {
@@ -306,8 +288,8 @@ function timer() {
         var timeString = minsLeft + ":" + (Math.floor(leftoverSeconds)/100).toFixed(2).slice(2);
         ctx.fillStyle = "red";
         ctx.fillText(timeString, 30, 30);
-        alert("Game over - time ran out!");
-        quit();
+        setTimeout(alert("Game over - time ran out!"), 1000);
+        initialise();
     }
     else {
         ctx.font = "24px Arial";
