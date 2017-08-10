@@ -1,7 +1,7 @@
 document.getElementById("level").innerText=currentLevel;
 document.getElementById("num-levels").innerText=levels.length;
 
-var running = true;
+var running = false;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const width = 1000;
@@ -43,22 +43,23 @@ ball.normaliseAngle = function(angle) {
     return angle;
 }
 
-document.body.addEventListener("keydown", function(e) {
+$("body").keydown(function(e) {
     if (e.keyCode == 39) {
         e.preventDefault();
-        paddle.goingEast = true;
+        paddle.goingEast = true;;
     }
     else if (e.keyCode == 37) {
         e.preventDefault();
         paddle.goingWest = true;
-    }
+    }    
 });
-document.body.addEventListener("keyup", function(e) {
-    e.preventDefault();
+$("body").keyup(function(e) {
     if (e.keyCode == 39) {
+        e.preventDefault();
         paddle.goingEast = false;
     }
     else if (e.keyCode == 37) {
+        e.preventDefault();
         paddle.goingWest = false;
     }
 });
@@ -109,14 +110,16 @@ function initialise() {
     timeRemaining = (levels[currentLevel-1].time+1)*1000;  // add extra second to get starting time displayed 
                                                            // correctly. It is taken off at the end!
     time = Date.now();
-    document.body.addEventListener("keydown", function launch(e) {
+    $("body").keydown(function launch(e) {
         // space bar to launch ball
         if (e.keyCode == 32) {
             e.preventDefault();
             ball.active = true;
-            document.body.removeEventListener("keydown", launch);
+            $("body").off("keydown", launch);
         }
     });
+    $("#start").prop("disabled", true);
+    $("#stop").prop("disabled", false);
     gameLoop();
 }
 
@@ -179,7 +182,7 @@ function moveStuff() {
         ball.centre.yPos -= Math.sin(ball.angle)*ball.speed;
     }
     else {
-        ball.centre.xPos = paddle.xPos + (paddle.width - ball.radius)/2; // ball needs to stick to paddle!
+        ball.centre.xPos = paddle.xPos + paddle.width/2; // ball needs to stick to paddle!
     }
     
 }
@@ -200,7 +203,6 @@ function hitDetection() {
     // bottom of screen: bounce off paddle if it's there
     if (ball.centre.yPos+ball.radius>=height-paddle.height) {
         if (paddle.xPos<=ball.centre.xPos+ball.radius && ball.centre.xPos-ball.radius<=paddle.xPos+paddle.width) {
-            ball.paddleHit = true;
             if (ball.angle<0) { 
                 // avoid "wobbling" by not changing direction if ball is already going upwards
 
@@ -350,16 +352,15 @@ function gameLoop() {
 
 function startGame() {
     currentLevel = 1;
-    makeBlocks();
-    timeRemaining = (levels[currentLevel-1].time+1)*1000;
-    time = Date.now();
     initialise();
 }
 
 
 function quit() {
-    drawStuff();
+    // drawStuff();
     running = false;
+    $("#start").prop("disabled", false);
+    $("#stop").prop("disabled", true);
 }
 
 
@@ -372,3 +373,5 @@ function helpText() {
         + "<p>And that's really all there is to it!</p>"
     });
 }
+
+gameLoop();
