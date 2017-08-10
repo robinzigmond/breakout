@@ -24,3 +24,7 @@
 .header-text {
     text-align: center;
 }
+
+.bootbox-body {
+    font-size: 18px;
+}

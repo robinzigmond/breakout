@@ -20,10 +20,10 @@ paddle.yPos = height - paddle.height;
 
 var ball = {
     radius: 8,
-    angle: Math.PI/4,
+    angle: Math.PI/2,
     speed: 4,
+    active: false // used to track whether played has pressed space bar to launch ball at start of level
 };
-ball.xSpeed = ball.speed*Math.cos(ball.angle);
 ball.centre = {
     xPos: paddle.startXPos + paddle.width/2,
     yPos: (height - paddle.height - ball.radius)
@@ -100,7 +100,8 @@ function initialise() {
         yPos: (height - paddle.height - ball.radius)
     };
     ball.speed = 4;
-    ball.angle = Math.PI/4;
+    ball.angle = Math.PI/2;
+    ball.active = false;
     paddle.xPos = paddle.startXPos;
     paddle.goingEast = paddle.goingWest = false;
     makeBlocks();
@@ -108,6 +109,14 @@ function initialise() {
     timeRemaining = (levels[currentLevel-1].time+1)*1000;  // add extra second to get starting time displayed 
                                                            // correctly. It is taken off at the end!
     time = Date.now();
+    document.body.addEventListener("keydown", function launch(e) {
+        // space bar to launch ball
+        if (e.keyCode == 32) {
+            e.preventDefault();
+            ball.active = true;
+            document.body.removeEventListener("keydown", launch);
+        }
+    });
     gameLoop();
 }
 
@@ -165,13 +174,19 @@ function moveStuff() {
     }
 
     // ball:
-    ball.centre.xPos += Math.cos(ball.angle)*ball.speed;
-    ball.centre.yPos -= Math.sin(ball.angle)*ball.speed;
+    if (ball.active) {
+        ball.centre.xPos += Math.cos(ball.angle)*ball.speed;
+        ball.centre.yPos -= Math.sin(ball.angle)*ball.speed;
+    }
+    else {
+        ball.centre.xPos = paddle.xPos + (paddle.width - ball.radius)/2; // ball needs to stick to paddle!
+    }
     
 }
 
 
 function hitDetection() {
+    var hitBlockBelow, hitBlockAbove, hitBlockLeft, hitBlockRight;
     // paddle can't move beyond right/left walls
     if (paddle.xPos<=0) {
         paddle.xPos = 0;
@@ -209,7 +224,6 @@ function hitDetection() {
         // more "wobble avoidance":
         if (ball.angle>0) {
             ball.angle = ball.normaliseAngle(-ball.angle);
-            ball.xSpeed = ball.speed*Math.cos(ball.angle);
         }
     }
     
@@ -224,7 +238,6 @@ function hitDetection() {
         // wobble avoidance:
         if (Math.abs(ball.angle)>Math.PI/2) {
             ball.angle = ball.normaliseAngle(Math.PI - ball.angle);
-            ball.xSpeed = ball.speed*Math.cos(ball.angle);
         }
     }
     
@@ -232,7 +245,6 @@ function hitDetection() {
         // wobble avoidance
         if (Math.abs(ball.angle)<=Math.PI/2) {
             ball.angle = ball.normaliseAngle(Math.PI - ball.angle);
-            ball.xSpeed = ball.speed*Math.cos(ball.angle);
         }
     }
 
@@ -247,15 +259,28 @@ function hitDetection() {
             block.stillThere = false;
             // now work out new angle for ball. It depends on whether it hit the block from above/below
             // or left/right.
-            if (ball.centre.yPos<block.yPos || ball.centre.yPos>block.yPos+block.height) {
-                // ball hitting from above or below:
+            if ((ball.centre.yPos<block.yPos && !hitBlockAbove)
+                || (ball.centre.yPos>block.yPos+block.height && !hitBlockBelow)) {
+                // ball hitting from above or below. We use "hitBlockAbove" and "hitBlockBelow" to make
+                // sure the ball still bounces after hitting 2 blocks
                 ball.angle = ball.normaliseAngle(-ball.angle);
-                ball.xSpeed = ball.speed*Math.cos(ball.angle);
+                if (ball.centre.yPos<block.yPos) {
+                    hitBlockAbove = true;
+                }
+                if (ball.centre.yPos>block.yPos+block.height) {
+                    hitBlockBelow = true;
+                }
             }
-            else {
-                // hitting from right or left (rare):
+            else if ((ball.centre.xPos<block.xPos && !hitBlockLeft)
+                || (ball.centre.xPos>block.xPos+block.width && !hitBlockRight)) {
+                // hitting from right or left:
                 ball.angle = ball.normaliseAngle(Math.PI - ball.angle);
-                ball.xSpeed = ball.speed*Math.cos(ball.angle);
+                if (ball.centre.xPos<block.xPos) {
+                    hitBlockLeft = true;
+                }
+                if (ball.centre.xPos>block.xPos+block.width) {
+                    hitBlockRight = true;
+                }
             }
         }
     });
@@ -328,7 +353,7 @@ function startGame() {
     makeBlocks();
     timeRemaining = (levels[currentLevel-1].time+1)*1000;
     time = Date.now();
-    gameLoop();
+    initialise();
 }
 
 
@@ -341,8 +366,9 @@ function quit() {
 function helpText() {
     bootbox.alert({
         message: "<p>This is a version of the classic Breakout game. The object is simply to clear the screen of all the coloured blocks before the time runs out.</p>"
-        + "<p>The only controls are the left and right arrow keys, which move the paddle left or right along the bottom of the screen. If the ball hits the bottom, you lose.</p>"
-        + "<p>The angle that the ball bounces back depends on which part of the paddle it hits - the nearer the edge, the sharper the angle.</p>"
+        + "<p>At the start of each level, press the <strong>space bar</strong> to launch the ball upwards - after first moving the paddle to your preferred starting location.</p>"
+        + "<p>After that, the only controls are the <strong>left</strong> and <strong>right arrow keys</strong>, which move the paddle left and right along the bottom of the screen. If the ball hits the bottom, you lose.</p>"
+        + "<p>The angle that the ball bounces back at depends on which part of the paddle it hits - the nearer the edge, the sharper the angle.</p>"
         + "<p>And that's really all there is to it!</p>"
     });
 }
