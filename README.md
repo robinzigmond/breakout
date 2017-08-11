@@ -1,0 +1,5 @@
+This is a relatively basic version of the classic "Breakout-style" game (see <https://en.wikipedia.org/wiki/Breakout_clone>) - made to run in a web browser using just Javascript and the HTML canvas. It is available to play at <https://robinzigmond.github.io/breakout> and should need no further comment.
+
+The powerup icons were drawn by me in basic Microsoft paint, 1 pixel at a time. Since I have zero graphical talent, they are obviously pretty horrible. But I hope they are mostly intuitive (and they are explained on the help popup in the game).
+
+I made this partly to practice my JS, but mainly to have fun :) The main motivation was just that after I made a basic [Snake](https://github.com/robinzigmond/snake) game, [Simen](https://github.com/Eventyret) made an incredibly cool [Tetris game](https://github.com/Eventyret/tetris-game) in just 1 day. My breakout is much less cool-looking, and probably much easier to code, than his Tetris - and it took me nearly a week to do (so far - I still want to add more levels and tidy up those horrible powerup icons). But I feel a bit more equal to his efforts for having done it :)
