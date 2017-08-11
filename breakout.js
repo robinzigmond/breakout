@@ -14,7 +14,6 @@ var paddle = {
     height: 14,
     speed: 5
 };
-paddle.sensitivity = 0.05/paddle.width; // constant which determines how hard the paddle "strikes" the ball
 paddle.startXPos = paddle.xPos = (width - paddle.width)/2;
 paddle.yPos = height - paddle.height;
 
@@ -43,9 +42,32 @@ ball.normaliseAngle = function(angle) {
     return angle;
 }
 
+// powerup definitions
+var plusTimeImg = new Image(20, 15);
+plusTimeImg.src = "images/+time.png";
+var minusTimeImg = new Image(20, 15);
+minusTimeImg.src = "images/-time.png";
+var plusPaddleImg = new Image(20, 15);
+plusPaddleImg.src = "images/+paddle.png";
+var minusPaddleImg = new Image(20, 15);
+minusPaddleImg.src = "images/-paddle.png";
+var plusSpeedImg = new Image(20, 15);
+plusSpeedImg.src = "images/+speed.png";
+var minusSpeedImg = new Image(20, 15);
+minusSpeedImg.src = "images/-speed.png";
+var plusBallImg = new Image(20, 15);
+plusBallImg.src = "images/+ball.png";
+var minusBallImg = new Image(20, 15);
+minusBallImg.src = "images/-ball.png";
 var powerups = [];
-var powerupTypes = ["+time", "-time", "+paddle", "-paddle", "+speed",
-    "-speed", "+ball", "-ball"];
+var powerupTypes = [{name: "+time", img: plusTimeImg},
+                    {name: "-time", img: minusTimeImg},
+                    {name: "+paddle", img: plusPaddleImg},
+                    {name: "-paddle", img: minusPaddleImg},
+                    {name: "+speed", img: plusSpeedImg},
+                    {name: "-speed", img: minusSpeedImg},
+                    {name: "+ball", img: plusBallImg},
+                    {name: "-ball", img: minusBallImg}];
 
 $("body").keydown(function(e) {
     if (e.keyCode == 39) {
@@ -149,7 +171,13 @@ function clearCanvas() {
 
 function drawStuff() {
     // draw paddle
-    ctx.fillStyle = "brown";
+    if (paddle.gotPowerup) {
+        ctx.fillStyle = "yellow";
+        paddle.gotPowerup = false;
+    }
+    else {
+        ctx.fillStyle = "brown";
+    }
     ctx.fillRect(paddle.xPos+paddle.height/2, paddle.yPos, paddle.width-paddle.height, paddle.height);
     ctx.beginPath();
     ctx.arc(paddle.xPos+paddle.height/2, paddle.yPos+paddle.height/2, paddle.height/2, Math.PI/2, 3*Math.PI/2);
@@ -176,13 +204,9 @@ function drawStuff() {
         ctx.strokeRect(block.xPos, block.yPos, block.width, block.height);
     });
 
-    // draw powerups. For now they will be small white rectangles with text on. Later I hope to draw something!
+    // draw powerups
     powerups.forEach(function(powerup) {
-        ctx.fillStyle = "white";
-        ctx.fillRect(powerup.xPos, powerup.yPos, powerup.width, powerup.height);
-        ctx.font = "14px Arial";
-        ctx.fillStyle = "black";
-        ctx.fillText(powerup.text, powerup.xPos, powerup.yPos);
+        ctx.drawImage(powerup.image, powerup.xPos, powerup.yPos);
     });
 }
 
@@ -227,6 +251,7 @@ function hitDetection() {
         if (powerup.xPos+powerup.width>=paddle.xPos && powerup.xPos<=paddle.xPos+paddle.width
             && powerup.yPos+powerup.height>=paddle.yPos) {
                 powerup.stillThere = false;
+                paddle.gotPowerup = true;
                 if (powerup.text == "+time") {
                     timeRemaining += 60000;
                 }
@@ -248,16 +273,16 @@ function hitDetection() {
                     paddle.xPos = (oldXPos+oldWidth/2)-paddle.width/2;
                 }
                 else if (powerup.text == "+speed") {
-                    paddle.speed += 1;
+                    paddle.speed *= 1.3;
                 }
                 else if (powerup.text == "-speed") {
-                    paddle.speed = Math.max(paddle.speed-1, 1);
+                    paddle.speed /= 1.3;
                 }
                 else if (powerup.text == "+ball") {
-                    ball.speed += 1;
+                    ball.speed *= 1.3;
                 }
                 else if (powerup.text == "-ball") {
-                    ball.speed = Math.max(ball.speed-1, 1);
+                    ball.speed /= 1.3;
                 }
         }
         // just disappear without effect if it hits the bottom:
@@ -341,13 +366,15 @@ function hitDetection() {
             block.stillThere = false;
             // then generate a new powerup if the block was white:
             if (block.colour == "white") {
+                var randomPowerup = powerupTypes[Math.floor(powerupTypes.length*Math.random())];
                 powerups.push({
                     xPos: (block.xPos+(block.width-blocks.unitWidth)/2),
                     yPos: block.yPos,
                     width: blocks.unitWidth,
                     height: blocks.rowHeight,
                     speed: 2,
-                    text: powerupTypes[Math.floor(powerupTypes.length*Math.random())],
+                    text: randomPowerup.name,
+                    image: randomPowerup.img,
                     stillThere: true
                 });
             }
