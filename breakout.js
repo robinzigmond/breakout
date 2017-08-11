@@ -507,7 +507,7 @@ function helpText() {
         + "<td>Decreases the speed of your paddle.</td></tr>"
         + "<tr><td><img src='images/+ball.png'></td>"
         + "<td>Increases the speed of the ball. This is a bit of a double-edged sword. It makes it harder to reach the ball in time - but a few of these can really help you complete the level quicker.</td></tr>"
-        + "<tr><td><img src='images/+ball.png'></td>"
+        + "<tr><td><img src='images/-ball.png'></td>"
         + "<td>Decreases the speed of the ball.</td></tr>"
         + "</tbody></table>"
     });
